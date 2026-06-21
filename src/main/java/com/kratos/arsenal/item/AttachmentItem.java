@@ -46,7 +46,7 @@ public class AttachmentItem extends Item {
                     attachmentStack.decrement(1);
                 }
                 world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                        SoundEvents.ITEM_ARMOR_EQUIP_NETHERITE.value(), SoundCategory.PLAYERS, 0.8f, 1.2f);
+                        SoundEvents.ITEM_ARMOR_EQUIP_NETHERITE, SoundCategory.PLAYERS, 0.8f, 1.2f);
             }
             return TypedActionResult.success(attachmentStack, world.isClient);
         }

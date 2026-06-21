@@ -32,7 +32,7 @@ import java.util.List;
  * <p>Flujo de disparo:
  * <ol>
  *     <li>{@link #use} comienza el "uso" del objeto (mantener clic derecho).</li>
- *     <li>{@link #usingTick} dispara según el modo (semi / ráfaga / automático),
+ *     <li>{@link #usageTick} dispara según el modo (semi / ráfaga / automático),
  *         respetando la cadencia y el cargador.</li>
  *     <li>{@link #onStoppedUsing} reinicia el estado al soltar el botón.</li>
  * </ol>
@@ -80,8 +80,8 @@ public class GunItem extends Item {
     }
 
     @Override
-    public void usingTick(ItemStack stack, LivingEntity user, int remainingUseTicks) {
-        if (user.getWorld().isClient || !(user instanceof ServerPlayerEntity player)) {
+    public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
+        if (world.isClient || !(user instanceof ServerPlayerEntity player)) {
             return;
         }
         if (GunData.isReloading(stack)) {
