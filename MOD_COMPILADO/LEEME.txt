@@ -1,0 +1,48 @@
+====================================================
+  KRATOS ARSENAL  -  CARPETA DEL MOD COMPILADO
+====================================================
+
+Aqui aparecera el archivo del mod ya listo:
+
+      kratos-arsenal-1.0.0.jar
+
+...DESPUES de ejecutar el compilador una vez.
+
+
+COMO COMPILARLO (un solo doble clic)
+------------------------------------
+1) Asegurate de tener instalado Java JDK 17
+   (descarga gratis en https://adoptium.net/).
+
+2) Vuelve a la carpeta principal del proyecto y ejecuta:
+
+      - En Windows:  doble clic en  COMPILAR-MOD.bat
+      - En Mac/Linux: ejecuta       ./COMPILAR-MOD.sh
+
+3) Cuando termine, el archivo kratos-arsenal-1.0.0.jar
+   aparecera AQUI, en esta carpeta MOD_COMPILADO.
+
+
+COMO INSTALARLO EN MINECRAFT
+----------------------------
+1) Instala Fabric Loader para Minecraft 1.20.1
+   (https://fabricmc.net/use/installer/).
+
+2) Descarga Fabric API para 1.20.1
+   (https://modrinth.com/mod/fabric-api).
+
+3) Copia en tu carpeta  .minecraft/mods/  estos dos archivos:
+      - fabric-api-xxxxx.jar
+      - kratos-arsenal-1.0.0.jar
+
+4) Abre Minecraft con el perfil "fabric-loader 1.20.1".
+   Las armas estan en la pestaña creativa "Kratos Arsenal".
+
+
+NOTA
+----
+El .jar no se pudo dejar pre-compilado desde el entorno web
+porque alli estaban bloqueados los servidores de Fabric y
+Mojang. En tu PC si tienes acceso, por eso el ultimo paso
+(compilar) se hace en tu maquina con un solo doble clic.
+====================================================
