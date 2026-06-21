@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "TET",
+    "GEG",
+    "TET"
+  ],
+  "key": {
+    "T": {
+      "item": "kratos_arsenal:titanium_ingot"
+    },
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "E": {
+      "item": "kratos_arsenal:electronic_components"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:scope_x8",
+    "count": 1
+  }
+}

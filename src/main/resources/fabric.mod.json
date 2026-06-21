@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "kratos_arsenal",
+  "version": "${version}",
+  "name": "Kratos Arsenal",
+  "description": "Sistema completo de armas modernas y futuristas para Minecraft: pistolas, rifles, escopetas, minigun, rifle de plasma, lanzacohetes, accesorios, munición por tipo, balística, HUD y mucho más.",
+  "authors": [
+    "Kratos Arsenal Team"
+  ],
+  "contact": {
+    "homepage": "https://github.com/josemanuelcontrerasgalarza-cyber/mod-minecraft-",
+    "sources": "https://github.com/josemanuelcontrerasgalarza-cyber/mod-minecraft-"
+  },
+  "license": "MIT",
+  "icon": "assets/kratos_arsenal/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.kratos.arsenal.KratosArsenal"
+    ],
+    "client": [
+      "com.kratos.arsenal.client.KratosArsenalClient"
+    ]
+  },
+  "mixins": [
+    {
+      "config": "kratos_arsenal.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.20.1",
+    "java": ">=17",
+    "fabric-api": "*"
+  },
+  "suggests": {}
+}

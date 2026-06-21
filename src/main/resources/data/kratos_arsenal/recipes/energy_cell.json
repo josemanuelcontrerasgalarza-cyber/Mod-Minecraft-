@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RER",
+    "RER"
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "E": {
+      "item": "kratos_arsenal:electronic_components"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:energy_cell",
+    "count": 8
+  }
+}

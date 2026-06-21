@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "item": "kratos_arsenal:steel_ingot"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:steel_block",
+    "count": 1
+  }
+}

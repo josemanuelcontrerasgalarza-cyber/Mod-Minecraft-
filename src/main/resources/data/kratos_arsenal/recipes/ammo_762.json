@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GS",
+    "SG"
+  ],
+  "key": {
+    "G": {
+      "item": "kratos_arsenal:advanced_gunpowder"
+    },
+    "S": {
+      "item": "kratos_arsenal:steel_ingot"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:ammo_762",
+    "count": 20
+  }
+}

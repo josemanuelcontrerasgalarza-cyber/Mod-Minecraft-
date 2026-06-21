@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PPS",
+    "GE ",
+    "S  "
+  ],
+  "key": {
+    "P": {
+      "item": "kratos_arsenal:gun_parts"
+    },
+    "S": {
+      "item": "kratos_arsenal:steel_ingot"
+    },
+    "G": {
+      "item": "kratos_arsenal:advanced_gunpowder"
+    },
+    "E": {
+      "item": "kratos_arsenal:electronic_components"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:mp5",
+    "count": 1
+  }
+}

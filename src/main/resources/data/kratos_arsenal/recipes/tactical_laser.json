@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RE ",
+    " S ",
+    "  S"
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "E": {
+      "item": "kratos_arsenal:electronic_components"
+    },
+    "S": {
+      "item": "kratos_arsenal:steel_ingot"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:tactical_laser",
+    "count": 1
+  }
+}

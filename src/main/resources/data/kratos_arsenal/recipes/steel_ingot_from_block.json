@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "kratos_arsenal:steel_block"
+    }
+  ],
+  "result": {
+    "item": "kratos_arsenal:steel_ingot",
+    "count": 9
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "TET",
+    "EGE",
+    "TET"
+  ],
+  "key": {
+    "T": {
+      "item": "kratos_arsenal:titanium_ingot"
+    },
+    "E": {
+      "item": "kratos_arsenal:electronic_components"
+    },
+    "G": {
+      "item": "kratos_arsenal:advanced_gunpowder"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:plasma_rifle",
+    "count": 1
+  }
+}

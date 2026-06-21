@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "TTT",
+    "PGE",
+    "TTT"
+  ],
+  "key": {
+    "T": {
+      "item": "kratos_arsenal:titanium_ingot"
+    },
+    "P": {
+      "item": "kratos_arsenal:gun_parts"
+    },
+    "G": {
+      "item": "kratos_arsenal:advanced_gunpowder"
+    },
+    "E": {
+      "item": "kratos_arsenal:electronic_components"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:rocket_launcher",
+    "count": 1
+  }
+}

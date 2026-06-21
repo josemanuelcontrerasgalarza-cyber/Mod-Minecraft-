@@ -1,0 +1,92 @@
+{
+  "glock19_shoot": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/glock19_shoot"
+    ]
+  },
+  "desert_eagle_shoot": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/desert_eagle_shoot"
+    ]
+  },
+  "mp5_shoot": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/mp5_shoot"
+    ]
+  },
+  "ak47_shoot": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/ak47_shoot"
+    ]
+  },
+  "m4a1_shoot": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/m4a1_shoot"
+    ]
+  },
+  "barrett_m82_shoot": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/barrett_m82_shoot"
+    ]
+  },
+  "spas12_shoot": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/spas12_shoot"
+    ]
+  },
+  "minigun_shoot": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/minigun_shoot"
+    ]
+  },
+  "plasma_rifle_shoot": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/plasma_rifle_shoot"
+    ]
+  },
+  "rocket_launcher_shoot": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/rocket_launcher_shoot"
+    ]
+  },
+  "shoot_silenced": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/shoot_silenced"
+    ]
+  },
+  "reload": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/reload"
+    ]
+  },
+  "dry_fire": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/dry_fire"
+    ]
+  },
+  "fire_mode_switch": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/fire_mode_switch"
+    ]
+  },
+  "headshot": {
+    "category": "player",
+    "sounds": [
+      "kratos_arsenal:guns/headshot"
+    ]
+  }
+}

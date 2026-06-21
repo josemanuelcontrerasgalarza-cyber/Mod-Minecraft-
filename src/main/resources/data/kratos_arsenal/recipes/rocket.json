@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "TGT",
+    "TGT",
+    "TFT"
+  ],
+  "key": {
+    "T": {
+      "item": "kratos_arsenal:titanium_ingot"
+    },
+    "G": {
+      "item": "kratos_arsenal:advanced_gunpowder"
+    },
+    "F": {
+      "item": "minecraft:fire_charge"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:rocket",
+    "count": 2
+  }
+}

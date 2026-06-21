@@ -1,0 +1,566 @@
+#!/usr/bin/env python3
+"""
+Generador de recursos de "Kratos Arsenal".
+
+Crea de forma reproducible todas las texturas temporales (PNG), modelos,
+blockstates, archivos de idioma, recetas, tablas de botín, generacion de
+mundo, etiquetas y sonidos de ejemplo (OGG). Es la fuente de la verdad de los
+assets: si cambian los nombres de registro en Java, basta con actualizar las
+listas de aqui y volver a ejecutar el script.
+
+Uso:  python3 tools/gen_assets.py
+"""
+import json
+import os
+import struct
+import zlib
+import hashlib
+import math
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+NS = "kratos_arsenal"
+ASSETS = os.path.join(ROOT, "src/main/resources/assets", NS)
+DATA = os.path.join(ROOT, "src/main/resources/data", NS)
+MCDATA = os.path.join(ROOT, "src/main/resources/data/minecraft")
+
+# --------------------------------------------------------------------------
+# Catalogo de contenido (debe coincidir con los registros de Java)
+# --------------------------------------------------------------------------
+GUNS = ["glock19", "desert_eagle", "mp5", "ak47", "m4a1", "barrett_m82",
+        "spas12", "minigun", "plasma_rifle", "rocket_launcher"]
+AMMO = ["ammo_9mm", "ammo_50ae", "ammo_762", "ammo_556", "ammo_50bmg",
+        "ammo_shell", "energy_cell", "rocket"]
+ATTACHMENTS = ["suppressor", "holo_sight", "scope_x4", "scope_x8",
+               "foregrip", "tactical_laser"]
+MATERIALS = ["steel_ingot", "titanium_ingot", "raw_titanium",
+             "electronic_components", "advanced_gunpowder", "gun_parts"]
+BLOCKS = ["titanium_ore", "deepslate_titanium_ore", "titanium_block", "steel_block"]
+
+# Nombres legibles (es / en)
+NAMES = {
+    "glock19": ("Glock 19", "Glock 19"),
+    "desert_eagle": ("Desert Eagle", "Desert Eagle"),
+    "mp5": ("MP5", "MP5"),
+    "ak47": ("AK-47", "AK-47"),
+    "m4a1": ("M4A1", "M4A1"),
+    "barrett_m82": ("Barrett M82", "Barrett M82"),
+    "spas12": ("Escopeta SPAS-12", "SPAS-12 Shotgun"),
+    "minigun": ("Minigun", "Minigun"),
+    "plasma_rifle": ("Rifle de Plasma", "Plasma Rifle"),
+    "rocket_launcher": ("Lanzacohetes", "Rocket Launcher"),
+    "ammo_9mm": ("Munición 9mm", "9mm Ammo"),
+    "ammo_50ae": ("Munición .50 AE", ".50 AE Ammo"),
+    "ammo_762": ("Munición 7.62mm", "7.62mm Ammo"),
+    "ammo_556": ("Munición 5.56mm", "5.56mm Ammo"),
+    "ammo_50bmg": ("Munición .50 BMG", ".50 BMG Ammo"),
+    "ammo_shell": ("Cartuchos de escopeta", "Shotgun Shells"),
+    "energy_cell": ("Célula de energía", "Energy Cell"),
+    "rocket": ("Cohete", "Rocket"),
+    "suppressor": ("Silenciador", "Suppressor"),
+    "holo_sight": ("Mira holográfica", "Holographic Sight"),
+    "scope_x4": ("Mira x4", "x4 Scope"),
+    "scope_x8": ("Mira x8", "x8 Scope"),
+    "foregrip": ("Empuñadura", "Foregrip"),
+    "tactical_laser": ("Láser táctico", "Tactical Laser"),
+    "steel_ingot": ("Lingote de acero", "Steel Ingot"),
+    "titanium_ingot": ("Lingote de titanio", "Titanium Ingot"),
+    "raw_titanium": ("Titanio en bruto", "Raw Titanium"),
+    "electronic_components": ("Componentes electrónicos", "Electronic Components"),
+    "advanced_gunpowder": ("Pólvora avanzada", "Advanced Gunpowder"),
+    "gun_parts": ("Piezas de armas", "Gun Parts"),
+    "titanium_ore": ("Mineral de titanio", "Titanium Ore"),
+    "deepslate_titanium_ore": ("Mineral de titanio de pizarra", "Deepslate Titanium Ore"),
+    "titanium_block": ("Bloque de titanio", "Block of Titanium"),
+    "steel_block": ("Bloque de acero", "Block of Steel"),
+}
+
+# --------------------------------------------------------------------------
+# Utilidades de ficheros
+# --------------------------------------------------------------------------
+def ensure(path):
+    os.makedirs(path, exist_ok=True)
+
+def write_json(path, obj):
+    ensure(os.path.dirname(path))
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(obj, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+# --------------------------------------------------------------------------
+# Generacion de PNG (sin dependencias externas)
+# --------------------------------------------------------------------------
+def write_png(path, pixels, w, h):
+    raw = bytearray()
+    for y in range(h):
+        raw.append(0)  # filtro 'None' por fila
+        for x in range(w):
+            r, g, b, a = pixels[y * w + x]
+            raw += bytes([r & 255, g & 255, b & 255, a & 255])
+
+    def chunk(typ, data):
+        return (struct.pack(">I", len(data)) + typ + data +
+                struct.pack(">I", zlib.crc32(typ + data) & 0xffffffff))
+
+    sig = b"\x89PNG\r\n\x1a\n"
+    ihdr = struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0)
+    idat = zlib.compress(bytes(raw), 9)
+    png = sig + chunk(b"IHDR", ihdr) + chunk(b"IDAT", idat) + chunk(b"IEND", b"")
+    ensure(os.path.dirname(path))
+    with open(path, "wb") as f:
+        f.write(png)
+
+def color_from(name, base):
+    """Color determinista derivado del nombre, mezclado con un color base."""
+    h = hashlib.md5(name.encode()).digest()
+    r = (h[0] + base[0]) // 2
+    g = (h[1] + base[1]) // 2
+    b = (h[2] + base[2]) // 2
+    return (r, g, b, 255)
+
+def shade(c, f):
+    return (max(0, min(255, int(c[0] * f))),
+            max(0, min(255, int(c[1] * f))),
+            max(0, min(255, int(c[2] * f))),
+            c[3] if len(c) > 3 else 255)
+
+def make_texture(path, name, base, accent=None, speckle=False):
+    """Textura 16x16: relleno, borde, banda diagonal y detalle de acento."""
+    w = h = 16
+    main = color_from(name, base)
+    px = [shade(main, 0.85 + 0.3 * ((x + y) % 2)) for y in range(h) for x in range(w)]
+    # borde
+    border = shade(main, 0.45)
+    for i in range(w):
+        px[i] = border
+        px[(h - 1) * w + i] = border
+        px[i * w] = border
+        px[i * w + (w - 1)] = border
+    # banda diagonal de acento
+    if accent:
+        for d in range(-1, 2):
+            for i in range(w):
+                x = i
+                y = (i + d) % h
+                if 0 < x < w - 1 and 0 < y < h - 1:
+                    px[y * w + x] = accent
+    # motas (para minerales)
+    if speckle:
+        hh = hashlib.md5(("spk" + name).encode()).digest()
+        for k in range(10):
+            x = 2 + hh[k] % 12
+            y = 2 + hh[(k + 5) % 16] % 12
+            px[y * w + x] = accent or shade(main, 1.4)
+    write_png(path, px, w, h)
+
+# --------------------------------------------------------------------------
+# Texturas
+# --------------------------------------------------------------------------
+def gen_textures():
+    item_dir = os.path.join(ASSETS, "textures/item")
+    block_dir = os.path.join(ASSETS, "textures/block")
+    ensure(item_dir)
+    ensure(block_dir)
+
+    for g in GUNS:
+        accent = (40, 40, 48, 255) if "plasma" not in g else (60, 200, 230, 255)
+        make_texture(os.path.join(item_dir, g + ".png"), g, (70, 72, 80), accent)
+    for a in AMMO:
+        base = (200, 170, 60) if a not in ("energy_cell", "rocket") else (60, 180, 200)
+        make_texture(os.path.join(item_dir, a + ".png"), a, base, (120, 90, 30, 255))
+    for at in ATTACHMENTS:
+        make_texture(os.path.join(item_dir, at + ".png"), at, (40, 42, 50), (20, 220, 120, 255))
+    mat_colors = {
+        "steel_ingot": (170, 175, 185),
+        "titanium_ingot": (150, 170, 190),
+        "raw_titanium": (120, 135, 150),
+        "electronic_components": (40, 160, 90),
+        "advanced_gunpowder": (45, 45, 55),
+        "gun_parts": (90, 92, 100),
+    }
+    for m in MATERIALS:
+        make_texture(os.path.join(item_dir, m + ".png"), m, mat_colors[m], shade(mat_colors[m], 1.5))
+
+    # bloques
+    make_texture(os.path.join(block_dir, "titanium_ore.png"), "titanium_ore",
+                 (128, 128, 128), (150, 175, 195, 255), speckle=True)
+    make_texture(os.path.join(block_dir, "deepslate_titanium_ore.png"), "deepslate_titanium_ore",
+                 (75, 75, 80), (150, 175, 195, 255), speckle=True)
+    make_texture(os.path.join(block_dir, "titanium_block.png"), "titanium_block", (150, 170, 190))
+    make_texture(os.path.join(block_dir, "steel_block.png"), "steel_block", (170, 175, 185))
+
+    # icono del mod
+    make_texture(os.path.join(ASSETS, "icon.png"), "kratos_icon", (60, 62, 70), (200, 60, 40, 255))
+
+# --------------------------------------------------------------------------
+# Modelos y blockstates
+# --------------------------------------------------------------------------
+def gen_models():
+    item_models = os.path.join(ASSETS, "models/item")
+    block_models = os.path.join(ASSETS, "models/block")
+    blockstates = os.path.join(ASSETS, "blockstates")
+
+    for g in GUNS:
+        write_json(os.path.join(item_models, g + ".json"),
+                   {"parent": "item/handheld", "textures": {"layer0": f"{NS}:item/{g}"}})
+    for name in AMMO + ATTACHMENTS + MATERIALS:
+        write_json(os.path.join(item_models, name + ".json"),
+                   {"parent": "item/generated", "textures": {"layer0": f"{NS}:item/{name}"}})
+
+    for b in BLOCKS:
+        write_json(os.path.join(block_models, b + ".json"),
+                   {"parent": "block/cube_all", "textures": {"all": f"{NS}:block/{b}"}})
+        write_json(os.path.join(item_models, b + ".json"),
+                   {"parent": f"{NS}:block/{b}"})
+        write_json(os.path.join(blockstates, b + ".json"),
+                   {"variants": {"": {"model": f"{NS}:block/{b}"}}})
+
+# --------------------------------------------------------------------------
+# Idiomas
+# --------------------------------------------------------------------------
+def gen_lang():
+    def build(idx):
+        L = {}
+        L["itemgroup.kratos_arsenal.general"] = "Kratos Arsenal" if idx else "Kratos Arsenal"
+        for name in GUNS + AMMO + ATTACHMENTS + MATERIALS + BLOCKS:
+            key = ("block." if name in BLOCKS else "item.") + f"kratos_arsenal.{name}"
+            L[key] = NAMES[name][idx]
+        # municiones (para el tooltip de calibre)
+        for a in AMMO:
+            L[f"ammo.kratos_arsenal.{a}"] = NAMES[a][idx]
+        # teclas
+        if idx == 0:
+            L["key.category.kratos_arsenal"] = "Kratos Arsenal"
+            L["key.kratos_arsenal.reload"] = "Recargar"
+            L["key.kratos_arsenal.fire_mode"] = "Cambiar modo de disparo"
+            L["key.kratos_arsenal.aim"] = "Apuntar (mira)"
+            L["firemode.kratos_arsenal.semi"] = "Semiautomático"
+            L["firemode.kratos_arsenal.burst"] = "Ráfaga"
+            L["firemode.kratos_arsenal.auto"] = "Automático"
+            L["attachment.slot.kratos_arsenal.sight"] = "Mira"
+            L["attachment.slot.kratos_arsenal.barrel"] = "Cañón"
+            L["attachment.slot.kratos_arsenal.grip"] = "Empuñadura"
+            L["attachment.slot.kratos_arsenal.laser"] = "Láser"
+            L["hud.kratos_arsenal.reloading"] = "Recargando..."
+            L["tooltip.kratos_arsenal.ammo"] = "Cargador: %s / %s"
+            L["tooltip.kratos_arsenal.caliber"] = "Calibre: %s"
+            L["tooltip.kratos_arsenal.damage"] = "Daño: %s"
+            L["tooltip.kratos_arsenal.firemode"] = "Modo: %s"
+            L["tooltip.kratos_arsenal.attachment"] = "Accesorio: %s"
+            L["tooltip.kratos_arsenal.attachment_slot"] = "Ranura: %s"
+            L["tooltip.kratos_arsenal.attachment_help"] = "Shift + clic derecho sobre un arma para montar"
+            L["tooltip.kratos_arsenal.help"] = "Clic derecho: disparar | R: recargar | B: modo | Ctrl: apuntar"
+        else:
+            L["key.category.kratos_arsenal"] = "Kratos Arsenal"
+            L["key.kratos_arsenal.reload"] = "Reload"
+            L["key.kratos_arsenal.fire_mode"] = "Switch fire mode"
+            L["key.kratos_arsenal.aim"] = "Aim (scope)"
+            L["firemode.kratos_arsenal.semi"] = "Semi-Auto"
+            L["firemode.kratos_arsenal.burst"] = "Burst"
+            L["firemode.kratos_arsenal.auto"] = "Full-Auto"
+            L["attachment.slot.kratos_arsenal.sight"] = "Sight"
+            L["attachment.slot.kratos_arsenal.barrel"] = "Barrel"
+            L["attachment.slot.kratos_arsenal.grip"] = "Grip"
+            L["attachment.slot.kratos_arsenal.laser"] = "Laser"
+            L["hud.kratos_arsenal.reloading"] = "Reloading..."
+            L["tooltip.kratos_arsenal.ammo"] = "Magazine: %s / %s"
+            L["tooltip.kratos_arsenal.caliber"] = "Caliber: %s"
+            L["tooltip.kratos_arsenal.damage"] = "Damage: %s"
+            L["tooltip.kratos_arsenal.firemode"] = "Mode: %s"
+            L["tooltip.kratos_arsenal.attachment"] = "Attachment: %s"
+            L["tooltip.kratos_arsenal.attachment_slot"] = "Slot: %s"
+            L["tooltip.kratos_arsenal.attachment_help"] = "Shift + right-click on a gun to attach"
+            L["tooltip.kratos_arsenal.help"] = "Right-click: fire | R: reload | B: mode | Ctrl: aim"
+        return L
+
+    write_json(os.path.join(ASSETS, "lang/es_es.json"), build(0))
+    write_json(os.path.join(ASSETS, "lang/en_us.json"), build(1))
+
+# --------------------------------------------------------------------------
+# Recetas
+# --------------------------------------------------------------------------
+def shaped(pattern, key, result, count=1):
+    return {"type": "minecraft:crafting_shaped", "pattern": pattern, "key": key,
+            "result": {"item": result, "count": count}}
+
+def shapeless(ingredients, result, count=1):
+    return {"type": "minecraft:crafting_shapeless",
+            "ingredients": ingredients,
+            "result": {"item": result, "count": count}}
+
+def smelt(ingredient, result, xp=0.7, time=200, kind="smelting"):
+    return {"type": f"minecraft:{kind}", "ingredient": {"item": ingredient},
+            "result": result, "experience": xp, "cookingtime": time}
+
+def item(i):
+    return {"item": i}
+
+def mod(name):
+    return {"item": f"{NS}:{name}"}
+
+def gen_recipes():
+    r = os.path.join(DATA, "recipes")
+
+    # --- Materiales ---
+    write_json(os.path.join(r, "steel_ingot_smelting.json"),
+               smelt("minecraft:iron_ingot", f"{NS}:steel_ingot", 0.7, 200))
+    write_json(os.path.join(r, "steel_ingot_blasting.json"),
+               smelt("minecraft:iron_ingot", f"{NS}:steel_ingot", 0.7, 100, "blasting"))
+    write_json(os.path.join(r, "titanium_ingot_smelting.json"),
+               smelt(f"{NS}:raw_titanium", f"{NS}:titanium_ingot", 1.0, 200))
+    write_json(os.path.join(r, "titanium_ingot_blasting.json"),
+               smelt(f"{NS}:raw_titanium", f"{NS}:titanium_ingot", 1.0, 100, "blasting"))
+
+    write_json(os.path.join(r, "electronic_components.json"),
+               shaped(["RQR", "QCQ", "RQR"],
+                      {"R": item("minecraft:redstone"), "Q": item("minecraft:quartz"),
+                       "C": item("minecraft:copper_ingot")}, f"{NS}:electronic_components", 2))
+    write_json(os.path.join(r, "advanced_gunpowder.json"),
+               shapeless([item("minecraft:gunpowder"), item("minecraft:gunpowder"),
+                          item("minecraft:blaze_powder"), item("minecraft:flint")],
+                         f"{NS}:advanced_gunpowder", 3))
+    write_json(os.path.join(r, "gun_parts.json"),
+               shaped(["SSS", "SRS", "SIS"],
+                      {"S": mod("steel_ingot"), "R": item("minecraft:redstone"),
+                       "I": item("minecraft:iron_ingot")}, f"{NS}:gun_parts", 2))
+
+    # --- Bloques de almacenamiento ---
+    for ing, blk in [("titanium_ingot", "titanium_block"), ("steel_ingot", "steel_block")]:
+        write_json(os.path.join(r, blk + ".json"),
+                   shaped(["III", "III", "III"], {"I": mod(ing)}, f"{NS}:{blk}"))
+        write_json(os.path.join(r, ing + "_from_block.json"),
+                   shapeless([mod(blk)], f"{NS}:{ing}", 9))
+
+    # --- Municion ---
+    ammo_recipes = {
+        "ammo_9mm": (["G", "S"], {"G": mod("advanced_gunpowder"), "S": item("minecraft:iron_nugget")}, 16),
+        "ammo_50ae": (["GG", "SS"], {"G": mod("advanced_gunpowder"), "S": item("minecraft:iron_nugget")}, 12),
+        "ammo_762": (["GS", "SG"], {"G": mod("advanced_gunpowder"), "S": mod("steel_ingot")}, 20),
+        "ammo_556": (["SG", "GS"], {"G": mod("advanced_gunpowder"), "S": item("minecraft:iron_nugget")}, 20),
+        "ammo_50bmg": (["SGS", "SGS"], {"G": mod("advanced_gunpowder"), "S": mod("steel_ingot")}, 8),
+        "ammo_shell": (["LG", "GL"], {"G": mod("advanced_gunpowder"), "L": item("minecraft:flint")}, 12),
+        "energy_cell": (["RER", "RER"], {"R": item("minecraft:redstone"),
+                        "E": mod("electronic_components")}, 8),
+        "rocket": (["TGT", "TGT", "TFT"], {"T": mod("titanium_ingot"), "G": mod("advanced_gunpowder"),
+                   "F": item("minecraft:fire_charge")}, 2),
+    }
+    for name, (pat, key, cnt) in ammo_recipes.items():
+        write_json(os.path.join(r, name + ".json"), shaped(pat, key, f"{NS}:{name}", cnt))
+
+    # --- Accesorios ---
+    attach_recipes = {
+        "suppressor": (["TTT", "G G", "TTT"], {"T": mod("titanium_ingot"), "G": item("minecraft:glass")}),
+        "holo_sight": (["GEG", "RER"], {"G": item("minecraft:glass_pane"),
+                       "E": mod("electronic_components"), "R": item("minecraft:redstone")}),
+        "scope_x4": (["TGT", "GEG", "TGT"], {"T": mod("titanium_ingot"),
+                     "G": item("minecraft:glass_pane"), "E": mod("electronic_components")}),
+        "scope_x8": (["TET", "GEG", "TET"], {"T": mod("titanium_ingot"),
+                     "G": item("minecraft:glass_pane"), "E": mod("electronic_components")}),
+        "foregrip": ["SS", "SS"],  # placeholder reemplazado abajo
+        "tactical_laser": (["RE ", " S ", "  S"], {"R": item("minecraft:redstone"),
+                           "E": mod("electronic_components"), "S": mod("steel_ingot")}),
+    }
+    write_json(os.path.join(r, "suppressor.json"), shaped(attach_recipes["suppressor"][0], attach_recipes["suppressor"][1], f"{NS}:suppressor"))
+    write_json(os.path.join(r, "holo_sight.json"), shaped(attach_recipes["holo_sight"][0], attach_recipes["holo_sight"][1], f"{NS}:holo_sight"))
+    write_json(os.path.join(r, "scope_x4.json"), shaped(attach_recipes["scope_x4"][0], attach_recipes["scope_x4"][1], f"{NS}:scope_x4"))
+    write_json(os.path.join(r, "scope_x8.json"), shaped(attach_recipes["scope_x8"][0], attach_recipes["scope_x8"][1], f"{NS}:scope_x8"))
+    write_json(os.path.join(r, "foregrip.json"),
+               shaped(["S S", "SSS"], {"S": mod("steel_ingot")}, f"{NS}:foregrip"))
+    write_json(os.path.join(r, "tactical_laser.json"),
+               shaped(attach_recipes["tactical_laser"][0], attach_recipes["tactical_laser"][1], f"{NS}:tactical_laser"))
+
+    # --- Armas (recetas equilibradas para supervivencia) ---
+    P = mod("gun_parts")
+    S = mod("steel_ingot")
+    T = mod("titanium_ingot")
+    E = mod("electronic_components")
+    G = mod("advanced_gunpowder")
+    gun_recipes = {
+        "glock19": (["PS", "G "], {"P": P, "S": S, "G": G}),
+        "desert_eagle": (["PSS", "G  "], {"P": P, "S": S, "G": G}),
+        "mp5": (["PPS", "GE ", "S  "], {"P": P, "S": S, "G": G, "E": E}),
+        "ak47": (["PPS", " GE", "  S"], {"P": P, "S": S, "G": G, "E": E}),
+        "m4a1": (["PPS", "SGE", "  S"], {"P": P, "S": S, "G": G, "E": E}),
+        "barrett_m82": ["sniper"],  # definido abajo con titanio
+        "spas12": (["PPS", "SGS"], {"P": P, "S": S, "G": G}),
+        "minigun": ["minigun"],
+        "plasma_rifle": (["TET", "EGE", "TET"], {"T": T, "E": E, "G": G}),
+        "rocket_launcher": ["rocket_launcher"],
+    }
+    write_json(os.path.join(r, "glock19.json"), shaped(gun_recipes["glock19"][0], gun_recipes["glock19"][1], f"{NS}:glock19"))
+    write_json(os.path.join(r, "desert_eagle.json"), shaped(gun_recipes["desert_eagle"][0], gun_recipes["desert_eagle"][1], f"{NS}:desert_eagle"))
+    write_json(os.path.join(r, "mp5.json"), shaped(gun_recipes["mp5"][0], gun_recipes["mp5"][1], f"{NS}:mp5"))
+    write_json(os.path.join(r, "ak47.json"), shaped(gun_recipes["ak47"][0], gun_recipes["ak47"][1], f"{NS}:ak47"))
+    write_json(os.path.join(r, "m4a1.json"), shaped(gun_recipes["m4a1"][0], gun_recipes["m4a1"][1], f"{NS}:m4a1"))
+    write_json(os.path.join(r, "spas12.json"), shaped(gun_recipes["spas12"][0], gun_recipes["spas12"][1], f"{NS}:spas12"))
+    write_json(os.path.join(r, "plasma_rifle.json"), shaped(gun_recipes["plasma_rifle"][0], gun_recipes["plasma_rifle"][1], f"{NS}:plasma_rifle"))
+    # Armas pesadas: requieren titanio
+    write_json(os.path.join(r, "barrett_m82.json"),
+               shaped(["PPT", "TGE", "  T"], {"P": P, "T": T, "G": G, "E": E}, f"{NS}:barrett_m82"))
+    write_json(os.path.join(r, "minigun.json"),
+               shaped(["TPT", "TGE", "TPT"], {"T": T, "P": P, "G": G, "E": E}, f"{NS}:minigun"))
+    write_json(os.path.join(r, "rocket_launcher.json"),
+               shaped(["TTT", "PGE", "TTT"], {"T": T, "P": P, "G": G, "E": E}, f"{NS}:rocket_launcher"))
+
+# --------------------------------------------------------------------------
+# Tablas de botin
+# --------------------------------------------------------------------------
+def block_drop_self(name):
+    return {
+        "type": "minecraft:block",
+        "pools": [{
+            "rolls": 1,
+            "entries": [{"type": "minecraft:item", "name": f"{NS}:{name}"}],
+            "conditions": [{"condition": "minecraft:survives_explosion"}]
+        }]
+    }
+
+def ore_drop(name, drop):
+    return {
+        "type": "minecraft:block",
+        "pools": [{
+            "rolls": 1,
+            "entries": [{
+                "type": "minecraft:alternatives",
+                "children": [
+                    {"type": "minecraft:item", "name": f"{NS}:{name}",
+                     "conditions": [{"condition": "minecraft:match_tool",
+                                     "predicate": {"enchantments": [
+                                         {"enchantment": "minecraft:silk_touch",
+                                          "levels": {"min": 1}}]}}]},
+                    {"type": "minecraft:item", "name": f"{NS}:{drop}",
+                     "functions": [
+                         {"function": "minecraft:apply_bonus", "enchantment": "minecraft:fortune",
+                          "formula": "minecraft:ore_drops"},
+                         {"function": "minecraft:explosion_decay"}]}
+                ]
+            }],
+            "conditions": [{"condition": "minecraft:survives_explosion"}]
+        }]
+    }
+
+def gen_loot():
+    lt = os.path.join(DATA, "loot_tables/blocks")
+    write_json(os.path.join(lt, "titanium_ore.json"), ore_drop("titanium_ore", "raw_titanium"))
+    write_json(os.path.join(lt, "deepslate_titanium_ore.json"), ore_drop("deepslate_titanium_ore", "raw_titanium"))
+    write_json(os.path.join(lt, "titanium_block.json"), block_drop_self("titanium_block"))
+    write_json(os.path.join(lt, "steel_block.json"), block_drop_self("steel_block"))
+
+# --------------------------------------------------------------------------
+# Generacion de mundo (mineral de titanio)
+# --------------------------------------------------------------------------
+def gen_worldgen():
+    cf = os.path.join(DATA, "worldgen/configured_feature")
+    pf = os.path.join(DATA, "worldgen/placed_feature")
+    write_json(os.path.join(cf, "titanium_ore.json"), {
+        "type": "minecraft:ore",
+        "config": {
+            "size": 6,
+            "discard_chance_on_air_exposure": 0.0,
+            "targets": [
+                {"target": {"predicate_type": "minecraft:tag_match",
+                            "tag": "minecraft:stone_ore_replaceables"},
+                 "state": {"Name": f"{NS}:titanium_ore"}},
+                {"target": {"predicate_type": "minecraft:tag_match",
+                            "tag": "minecraft:deepslate_ore_replaceables"},
+                 "state": {"Name": f"{NS}:deepslate_titanium_ore"}}
+            ]
+        }
+    })
+    write_json(os.path.join(pf, "titanium_ore.json"), {
+        "feature": f"{NS}:titanium_ore",
+        "placement": [
+            {"type": "minecraft:count", "count": 6},
+            {"type": "minecraft:in_square"},
+            {"type": "minecraft:height_range",
+             "height": {"type": "minecraft:trapezoid",
+                        "min_inclusive": {"absolute": -32},
+                        "max_inclusive": {"absolute": 56}}},
+            {"type": "minecraft:biome"}
+        ]
+    })
+
+# --------------------------------------------------------------------------
+# Etiquetas (mineria)
+# --------------------------------------------------------------------------
+def gen_tags():
+    mineable = os.path.join(MCDATA, "tags/blocks/mineable/pickaxe.json")
+    needs_iron = os.path.join(MCDATA, "tags/blocks/needs_iron_tool.json")
+    blocks = [f"{NS}:{b}" for b in BLOCKS]
+    write_json(mineable, {"replace": False, "values": blocks})
+    write_json(needs_iron, {"replace": False, "values": blocks})
+
+# --------------------------------------------------------------------------
+# Sonidos de ejemplo (OGG) + sounds.json
+# --------------------------------------------------------------------------
+def gen_sounds():
+    try:
+        import numpy as np
+        import soundfile as sf
+    except Exception as e:
+        print("  [sonidos] soundfile/numpy no disponibles, se omiten los OGG:", e)
+        gen_sounds_json(have_files=False)
+        return
+
+    snd_dir = os.path.join(ASSETS, "sounds/guns")
+    ensure(snd_dir)
+    sr = 44100
+
+    def noise_burst(path, dur, decay, base_freq, crackle=1.0, vol=0.8):
+        n = int(sr * dur)
+        t = np.linspace(0, dur, n, endpoint=False)
+        env = np.exp(-decay * t)
+        sig = np.random.uniform(-1, 1, n) * crackle
+        tone = np.sin(2 * math.pi * base_freq * t) * 0.5
+        wave = (sig + tone) * env * vol
+        wave = np.clip(wave, -1, 1).astype("float32")
+        sf.write(path, wave, sr, format="OGG", subtype="VORBIS")
+
+    # Disparos por arma (timbres distintos)
+    params = {
+        "glock19": (0.18, 28, 220), "desert_eagle": (0.30, 18, 130),
+        "mp5": (0.14, 32, 260), "ak47": (0.26, 20, 150),
+        "m4a1": (0.22, 24, 180), "barrett_m82": (0.5, 10, 80),
+        "spas12": (0.4, 14, 90), "minigun": (0.12, 36, 200),
+        "plasma_rifle": (0.3, 16, 520), "rocket_launcher": (0.6, 8, 60),
+    }
+    for g, (dur, dec, freq) in params.items():
+        noise_burst(os.path.join(snd_dir, g + "_shoot.ogg"), dur, dec, freq,
+                    crackle=0.3 if g == "plasma_rifle" else 1.0)
+
+    noise_burst(os.path.join(snd_dir, "shoot_silenced.ogg"), 0.12, 40, 300, vol=0.5)
+    noise_burst(os.path.join(snd_dir, "dry_fire.ogg"), 0.06, 60, 400, crackle=0.4, vol=0.5)
+    noise_burst(os.path.join(snd_dir, "fire_mode_switch.ogg"), 0.05, 70, 600, crackle=0.2, vol=0.4)
+    noise_burst(os.path.join(snd_dir, "headshot.ogg"), 0.2, 22, 900, crackle=0.2, vol=0.6)
+    # Recarga: dos clics
+    n = int(sr * 0.6)
+    t = np.linspace(0, 0.6, n, endpoint=False)
+    env = (np.exp(-40 * (t)) + np.exp(-40 * np.abs(t - 0.3)))
+    wave = (np.random.uniform(-1, 1, n) * env * 0.4).astype("float32")
+    sf.write(os.path.join(snd_dir, "reload.ogg"), np.clip(wave, -1, 1), sr, format="OGG", subtype="VORBIS")
+
+    print("  [sonidos] OGG de ejemplo generados.")
+    gen_sounds_json(have_files=True)
+
+def gen_sounds_json(have_files):
+    entries = {}
+    for g in GUNS:
+        entries[g + "_shoot"] = {"category": "player", "sounds": [f"{NS}:guns/{g}_shoot"]}
+    for extra in ["shoot_silenced", "reload", "dry_fire", "fire_mode_switch", "headshot"]:
+        entries[extra] = {"category": "player", "sounds": [f"{NS}:guns/{extra}"]}
+    write_json(os.path.join(ASSETS, "sounds.json"), entries)
+
+# --------------------------------------------------------------------------
+def main():
+    print("Generando recursos de Kratos Arsenal...")
+    gen_textures();   print("  - texturas")
+    gen_models();     print("  - modelos / blockstates")
+    gen_lang();       print("  - idiomas")
+    gen_recipes();    print("  - recetas")
+    gen_loot();       print("  - tablas de botin")
+    gen_worldgen();   print("  - generacion de mundo")
+    gen_tags();       print("  - etiquetas")
+    gen_sounds();     print("  - sonidos")
+    print("Listo.")
+
+if __name__ == "__main__":
+    main()

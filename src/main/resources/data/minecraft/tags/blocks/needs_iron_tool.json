@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "kratos_arsenal:titanium_ore",
+    "kratos_arsenal:deepslate_titanium_ore",
+    "kratos_arsenal:titanium_block",
+    "kratos_arsenal:steel_block"
+  ]
+}

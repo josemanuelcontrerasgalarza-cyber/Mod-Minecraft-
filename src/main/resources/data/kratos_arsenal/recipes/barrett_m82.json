@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PPT",
+    "TGE",
+    "  T"
+  ],
+  "key": {
+    "P": {
+      "item": "kratos_arsenal:gun_parts"
+    },
+    "T": {
+      "item": "kratos_arsenal:titanium_ingot"
+    },
+    "G": {
+      "item": "kratos_arsenal:advanced_gunpowder"
+    },
+    "E": {
+      "item": "kratos_arsenal:electronic_components"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:barrett_m82",
+    "count": 1
+  }
+}

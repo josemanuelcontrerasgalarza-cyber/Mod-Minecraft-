@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "LG",
+    "GL"
+  ],
+  "key": {
+    "G": {
+      "item": "kratos_arsenal:advanced_gunpowder"
+    },
+    "L": {
+      "item": "minecraft:flint"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:ammo_shell",
+    "count": 12
+  }
+}

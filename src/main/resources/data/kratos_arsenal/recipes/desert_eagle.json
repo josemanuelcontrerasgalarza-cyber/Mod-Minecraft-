@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PSS",
+    "G  "
+  ],
+  "key": {
+    "P": {
+      "item": "kratos_arsenal:gun_parts"
+    },
+    "S": {
+      "item": "kratos_arsenal:steel_ingot"
+    },
+    "G": {
+      "item": "kratos_arsenal:advanced_gunpowder"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:desert_eagle",
+    "count": 1
+  }
+}

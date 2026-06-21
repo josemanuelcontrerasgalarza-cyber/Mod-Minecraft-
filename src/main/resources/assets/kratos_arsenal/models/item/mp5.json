@@ -1,0 +1,6 @@
+{
+  "parent": "item/handheld",
+  "textures": {
+    "layer0": "kratos_arsenal:item/mp5"
+  }
+}

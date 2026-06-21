@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "TTT",
+    "G G",
+    "TTT"
+  ],
+  "key": {
+    "T": {
+      "item": "kratos_arsenal:titanium_ingot"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:suppressor",
+    "count": 1
+  }
+}

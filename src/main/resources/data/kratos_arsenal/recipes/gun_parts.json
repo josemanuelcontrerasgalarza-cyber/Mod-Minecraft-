@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SSS",
+    "SRS",
+    "SIS"
+  ],
+  "key": {
+    "S": {
+      "item": "kratos_arsenal:steel_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "kratos_arsenal:gun_parts",
+    "count": 2
+  }
+}
